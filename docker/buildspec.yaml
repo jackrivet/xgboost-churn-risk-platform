@@ -1,0 +1,32 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: us-east-1
+    ECR_REPOSITORY: churn-risk-processing
+    IMAGE_TAG: latest
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR
+      - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+  build:
+    commands:
+      - echo Building Docker image
+      - docker build -t $ECR_REPOSITORY:$IMAGE_TAG -f docker/processing/Dockerfile .
+      - docker tag $ECR_REPOSITORY:$IMAGE_TAG $IMAGE_URI
+
+  post_build:
+    commands:
+      - echo Pushing Docker image
+      - docker push $IMAGE_URI
+      - echo $IMAGE_URI > image_uri.txt
+
+
+artifacts:
+  files:
+    - image_uri.txt
