@@ -191,6 +191,14 @@ The workflow:
 - performs batch scoring
 - writes ranked predictions back to S3
 
+Prediction outputs are consumed by two downstream tables:
+
+
+`churn_risk_report`: latest scored row per account
+`churn_risk_historic`: one scored row per account per inference run
+
+
+See `docs/prediction_schema.md` for the full output contract.
 
 ---
 
