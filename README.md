@@ -93,13 +93,13 @@ churn-risk-platform/
 │   └── buildspec.yaml
 │
 ├── examples/
-│   ├── metrics_example.json
-│   └── predictions_schema.md
+│   └──  metrics_example.json
 │
 ├── docs/
 │   ├── architecture.md
 │   ├── data_model.md
 │   └── ml_notes.md
+│   └── predictions_schema.md
 │
 ├── requirements.txt
 ├── .gitignore
