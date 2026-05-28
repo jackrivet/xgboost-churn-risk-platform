@@ -17,36 +17,9 @@ The implementation emphasizes:
 
 # Architecture
 
-```text
-                   ┌──────────────────┐
-                   │   Athena Views   │
-                   └────────┬─────────┘
-                            │
-                            ▼
-                   ┌──────────────────┐
-                   │  S3 Batch Export │
-                   └────────┬─────────┘
-                            │
-                ┌───────────┴───────────┐
-                │                       │
-                ▼                       ▼
-     ┌──────────────────┐   ┌──────────────────┐
-     │ Monthly Training │   │ Weekly Inference │
-     │     Workflow     │   │     Workflow     │
-     └────────┬─────────┘   └────────┬─────────┘
-              │                      │
-              ▼                      ▼
-     ┌──────────────────┐   ┌──────────────────┐
-     │ SageMaker Proc.  │   │ SageMaker Proc.  │
-     │ XGBoost Training │   │ Batch Scoring    │
-     └────────┬─────────┘   └────────┬─────────┘
-              │                      │
-              ▼                      ▼
-     ┌──────────────────┐   ┌──────────────────┐
-     │  Model Artifacts │   │ Prediction Output│
-     │       in S3      │   │    Parquet/S3    │
-     └──────────────────┘   └──────────────────┘
-```
+<img width="1179" height="727" alt="XGBoost Architecture Diagram" src="https://github.com/user-attachments/assets/4bcf9ecb-0b2c-46eb-8ec6-1642b9f4cf8d" />
+
+See `workflows/inference/inference_dag.png` and `workflows/training/training_dag.png` for more thorough architecture descriptions.
 
 ---
 
