@@ -86,9 +86,7 @@ churn-risk-platform/
 │
 ├── sql/
 │   ├── training/
-│   ├── inference/
-│   ├── features/
-│   └── labels/
+│   └── inference/
 │
 ├── infrastructure/
 │   ├── cdk/
