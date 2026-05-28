@@ -1,23 +1,21 @@
 # Churn Risk Prediction Platform
 
-Production churn prediction system built on AWS using Athena, SageMaker Processing, XGBoost, and SageMaker Unified Studio workflows.
+Time-aware churn prediction system built on AWS using Athena, SageMaker Processing, XGBoost, and SageMaker Unified Studio workflows.
 
-The platform generates time-indexed account-level feature snapshots from operational datasets, trains a leakage-aware XGBoost classifier, and executes scheduled batch inference through Airflow-style DAG orchestration.
+The system trains and deploys an account-level churn model using temporal feature snapshots derived from operational support data. Training and inference are orchestrated through scheduled DAGs that launch containerized SageMaker Processing jobs for feature preparation, model training, calibration, and batch scoring.
 
-The system is designed around:
+The implementation emphasizes:
 
-- time-aware model validation
+- temporal correctness
 - reproducible batch inference
-- feature parity between training and inference
-- containerized execution
-- scheduled retraining and scoring workflows
+- strict training/inference feature consistency
+- leakage-aware validation
+- scheduled retraining workflows
 
 
 ---
 
-# System Architecture
-
-## High-Level Flow
+# Architecture
 
 ```text
                    ┌──────────────────┐
@@ -34,7 +32,7 @@ The system is designed around:
                 ▼                       ▼
      ┌──────────────────┐   ┌──────────────────┐
      │ Monthly Training │   │ Weekly Inference │
-     │       DAG        │   │       DAG        │
+     │     Workflow     │   │     Workflow     │
      └────────┬─────────┘   └────────┬─────────┘
               │                      │
               ▼                      ▼
@@ -49,24 +47,21 @@ The system is designed around:
      │       in S3      │   │    Parquet/S3    │
      └──────────────────┘   └──────────────────┘
 ```
-## Training and Inference DAGs
-<img width="407" height="660" alt="Screenshot 2026-05-28 at 9 14 21 AM" src="https://github.com/user-attachments/assets/ddd43832-c7d5-4aaa-8524-694d1edc2418" />
-<img width="361" height="456" alt="Screenshot 2026-05-28 at 9 14 48 AM" src="https://github.com/user-attachments/assets/746ff180-d9b0-48a7-9606-5f8e8ddb3706" />
 
 ---
 
-# Core Stack
+# Stack
 
 | Component | Technology |
 |---|---|
-| Query Layer | Amazon Athena |
-| Object Storage | Amazon S3 |
-| ML Execution | SageMaker Processing |
+| Query Engine | Amazon Athena |
+| Storage | Amazon S3 |
+| ML Runtime | SageMaker Processing |
 | Model | XGBoost |
 | Workflow Orchestration | SageMaker Unified Studio |
-| Workflow Runtime | MWAA / Airflow-style DAGs |
-| Container Runtime | Docker + Amazon ECR |
-| Reporting Layer | Amazon QuickSight |
+| Workflow Runtime | MWAA / Airflow |
+| Container Registry | Amazon ECR |
+| Reporting | Amazon QuickSight |
 | Infrastructure | AWS CDK / CloudFormation |
 
 ---
@@ -76,15 +71,26 @@ The system is designed around:
 ```text
 churn-risk-platform/
 │
-├── dags/
+├── workflows/
 │   ├── training/
+│   │   ├── training_processing_job.yaml
+│   │   └── training_dag.png
+│   │
 │   └── inference/
+│       ├── inference_processing_job.yaml
+│       └── inference_dag.png
 │
 ├── processing/
-│   ├── train_xgb_processing.py
-│   ├── churn_xgb_inference.py
-│   ├── preprocessing/
-│   └── utils/
+│   ├── training/
+│   │   ├── train_xgb_processing.py
+│   │   ├── preprocessing.py
+│   │   ├── validation.py
+│   │   └── calibration.py
+│   │
+│   └── inference/
+│       ├── churn_xgb_inference.py
+│       ├── feature_reconstruction.py
+│       └── scoring.py
 │
 ├── sql/
 │   ├── training/
@@ -100,30 +106,28 @@ churn-risk-platform/
 ├── docker/
 │   └── processing/
 │
+├── examples/
+│   ├── metrics_example.json
+│   ├── predictions_schema.md
+│   └── feature_set_example.csv
+│
 ├── docs/
 │   ├── architecture.md
 │   ├── data_model.md
 │   └── ml_notes.md
 │
+├── requirements.txt
+├── .gitignore
 └── README.md
 ```
 
 ---
 
-# Workflow Orchestration
+# Training Workflow
 
-The platform is orchestrated through two independent SageMaker Unified Studio workflows.
+The training workflow executes monthly through a SageMaker Unified Studio DAG.
 
----
-
-# Monthly Training Workflow
-
-Schedule:
-
-- first day of each month
-
-
-Workflow structure:
+Workflow stages:
 
 ```text
 Purge-Old-Runs
@@ -137,27 +141,23 @@ XGBoost-Preprocessing
 Register-Model
 ```
 
-The workflow launches a containerized SageMaker Processing job that:
+The workflow:
 
-- loads temporal training snapshots from S3
-- validates snapshot integrity
-- applies censor-aware filtering
-- constructs time-aware train/holdout splits
-- trains and calibrates an XGBoost classifier
+- exports training snapshots from Athena to S3
+- launches a containerized SageMaker Processing job
+- applies temporal validation logic
+- trains and calibrates the model
 - packages model artifacts
 - registers the resulting model bundle
 
 
 ---
 
-# Weekly Inference Workflow
+# Inference Workflow
 
-Schedule:
+The inference workflow executes weekly.
 
-- weekly
-
-
-Workflow structure:
+Workflow stages:
 
 ```text
 Unload-Previous-Run
@@ -171,18 +171,18 @@ Execute-Inference
 
 The workflow:
 
-- retrieves the latest inference snapshot from Athena
-- loads the most recent model bundle
-- reconstructs the feature matrix
-- generates calibrated churn probabilities
-- writes ranked predictions to S3
+- retrieves the latest inference snapshot
+- loads the current model artifacts
+- reconstructs the training feature space
+- performs batch scoring
+- writes ranked predictions back to S3
 
 
 ---
 
 # Training Pipeline
 
-Training data is exported from Athena as Parquet snapshots and mounted into the processing container at:
+Training snapshots are mounted into the processing container at:
 
 ```text
 /opt/ml/processing/input/raw
@@ -196,28 +196,23 @@ Primary fields:
 | as_of_date | Snapshot timestamp |
 | label_churn_365d | 365-day churn target |
 
----
-
-# Time-Aware Validation
-
-The training workflow uses strictly chronological validation logic.
+The training pipeline uses strictly chronological validation logic.
 
 Validation characteristics:
 
 - adaptive last-N-month holdout selection
 - chronological calibration/test separation
-- duplicate snapshot protection
-- leakage-aware splitting
 - right-censor filtering
+- duplicate snapshot handling
 
 
-Random train/test splits are intentionally avoided.
+Random train/test splitting is intentionally avoided.
 
 ---
 
-# Right-Censor Handling
+# Right-Censor Filtering
 
-Recent negative examples are excluded when the full churn observation horizon has not elapsed.
+Recent negative observations are excluded when the full churn horizon has not elapsed.
 
 Filtering logic:
 
@@ -228,7 +223,7 @@ Drop:
     as_of_date > (today - horizon_days)
 ```
 
-This prevents incorrectly labeling unresolved future churn outcomes as negatives.
+This prevents unresolved future churn outcomes from being treated as observed negatives.
 
 ---
 
@@ -246,28 +241,25 @@ Examples:
 | avg_eval_score_90d | QA evaluation average |
 | fcr_rate_90d | First-contact resolution rate |
 | survey_score_90d | Survey average |
-| annual_saas_revenue | Annual SaaS revenue |
+| annual_saas_revenue | SaaS revenue |
 | total_enrollment | Enrollment-based size proxy |
 
 ---
 
 # Model Training
 
-Model:
-
-- XGBoost binary classifier
-
+The current implementation uses an XGBoost binary classifier.
 
 Training characteristics:
 
 - class imbalance weighting via `scale_pos_weight`
 - early stopping
 - histogram tree method
-- probability calibration using Platt scaling
+- Platt probability calibration
 - persisted feature medians for inference parity
 
 
-The processing job outputs:
+Training artifacts:
 
 ```text
 xgb_model.json
@@ -282,7 +274,7 @@ model.tar.gz
 
 # Inference Pipeline
 
-Inference executes through a containerized SageMaker Processing job.
+Inference runs through a containerized SageMaker Processing job.
 
 Mounted inputs:
 
@@ -295,16 +287,12 @@ Mounted inputs:
 The inference pipeline:
 
 - loads persisted feature metadata
-- reconstructs training feature ordering
+- reconstructs feature ordering
 - imputes missing values using persisted medians
 - computes raw XGBoost margins
-- applies Platt calibration when available
-- ranks accounts by churn probability
+- applies calibration when available
+- ranks accounts by predicted churn probability
 
-
----
-
-# Inference Output
 
 Predictions are written to:
 
@@ -325,17 +313,13 @@ Output schema:
 
 ---
 
-# Processing Configuration
-
-Inference jobs are launched dynamically through workflow templates.
-
-Example configuration:
+# Example Workflow Configuration
 
 ```yaml
 ProcessingJobName: churn-risk-xgb-inference-{{ ds_nodash }}
 
 AppSpecification:
-  ImageUri: <xgboost-ecr-image>
+  ImageUri: <ecr-image-uri>
 
   ContainerEntrypoint:
 
@@ -353,7 +337,7 @@ ProcessingResources:
 
 # Data Sources
 
-The platform aggregates operational/account-level data from systems including:
+The platform aggregates operational and account-level data from:
 
 - Amazon Connect
 - Salesforce Service Cloud Voice
@@ -373,20 +357,6 @@ source .venv/bin/activate
 
 pip install -r requirements.txt
 ```
-
----
-
-# Planned Enhancements
-
-Potential future additions:
-
-- drift monitoring
-- SHAP-based explainability
-- feature store integration
-- automated hyperparameter tuning
-- online inference endpoints
-- multi-model evaluation workflows
-
 
 ---
 
