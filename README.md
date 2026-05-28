@@ -89,7 +89,8 @@ churn-risk-platform/
 │   └── inference.sql
 │
 ├── docker/
-│   └── processing/
+│   ├── Dockerfile
+│   └── buildspec.yaml
 │
 ├── examples/
 │   ├── metrics_example.json
@@ -332,7 +333,17 @@ The platform aggregates operational and account-level data from:
 
 
 ---
+# Container Build
 
+The processing image is built with CodeBuild and pushed to ECR. The same image is used by both the training and inference SageMaker Processing jobs.
+
+```bash
+aws ecr create-repository --repository-name churn-risk-processing
+
+aws codebuild start-build \
+  --project-name churn-risk-processing-build
+```
+---
 # Local Development
 
 ```bash
