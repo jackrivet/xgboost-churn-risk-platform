@@ -17,7 +17,8 @@ The implementation emphasizes:
 
 # Architecture
 
-<img width="1179" height="727" alt="XGBoost Architecture Diagram" src="https://github.com/user-attachments/assets/4bcf9ecb-0b2c-46eb-8ec6-1642b9f4cf8d" />
+<img width="1179" height="723" alt="XGBoost Architecture Diagram" src="https://github.com/user-attachments/assets/da0f1d1e-fc26-4f74-b56f-78e70d091c0f" />
+
 
 See `workflows/inference/inference_dag.png` and `workflows/training/training_dag.png` for more thorough architecture descriptions.
 
