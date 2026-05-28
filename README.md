@@ -88,10 +88,6 @@ churn-risk-platform/
 │   ├── training.sql
 │   └── inference.sql
 │
-├── infrastructure/
-│   ├── cdk/
-│   └── iam/
-│
 ├── docker/
 │   └── processing/
 │
