@@ -103,6 +103,7 @@ churn-risk-platform/
 │
 ├── requirements.txt
 ├── .gitignore
+├── LICENSE
 └── README.md
 ```
 
