@@ -107,6 +107,35 @@ churn-risk-platform/
 ```
 
 ---
+## Example Model Performance
+
+Evaluation was performed using a temporally separated holdout window with right-censor filtering to avoid future leakage.
+
+The model is primarily optimized for account ranking and prioritization rather than hard binary classification. I especially focused on maximizing lift in the highest risk segments, commensurate with our operational bandwidth for targeted interventions to prevent attrition.
+
+### Ranking Performance
+
+| Segment | Precision | Lift vs Baseline | Recall |
+|---|---:|---:|---:|
+| Top 0.5% highest-risk accounts | 92.3% | 21.9x | 11.0% |
+| Top 1% highest-risk accounts | 80.8% | 19.2x | 19.3% |
+| Top 2% highest-risk accounts | 65.4% | 15.5x | 31.2% |
+| Top 5% highest-risk accounts | 44.2% | 10.5x | 52.3% |
+
+### Statistical Performance
+
+| Metric | Value |
+|---|---:|
+| ROC-AUC | 0.919 |
+| PR-AUC | 0.517 |
+| Log Loss | 0.145 |
+| Brier Score | 0.036 |
+
+The final model achieved over 19x lift in the top 1% risk segment on a fully time-aware holdout set.
+
+See `examples/metrics_example.json` for a sanitized evaluation artifact.
+
+---
 
 # Training Workflow
 
