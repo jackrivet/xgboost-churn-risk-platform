@@ -81,16 +81,8 @@ churn-risk-platform/
 │       └── inference_dag.png
 │
 ├── processing/
-│   ├── training/
-│   │   ├── train_xgb_processing.py
-│   │   ├── preprocessing.py
-│   │   ├── validation.py
-│   │   └── calibration.py
-│   │
-│   └── inference/
-│       ├── churn_xgb_inference.py
-│       ├── feature_reconstruction.py
-│       └── scoring.py
+│   ├── train_xgb_processing.py
+│   └── churn_xgb_inference.py
 │
 ├── sql/
 │   ├── training/
@@ -100,16 +92,14 @@ churn-risk-platform/
 │
 ├── infrastructure/
 │   ├── cdk/
-│   ├── iam/
-│   └── workflow_configs/
+│   └── iam/
 │
 ├── docker/
 │   └── processing/
 │
 ├── examples/
 │   ├── metrics_example.json
-│   ├── predictions_schema.md
-│   └── feature_set_example.csv
+│   └── predictions_schema.md
 │
 ├── docs/
 │   ├── architecture.md
