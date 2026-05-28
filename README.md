@@ -85,8 +85,8 @@ churn-risk-platform/
 │   └── churn_xgb_inference.py
 │
 ├── sql/
-│   ├── training/
-│   └── inference/
+│   ├── training.sql
+│   └── inference.sql
 │
 ├── infrastructure/
 │   ├── cdk/
